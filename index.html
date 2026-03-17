@@ -544,7 +544,6 @@ function applyBizContext() {
 }
 
 // ─── WINDSOR CONFIG ───────────────────────────────────────────────────────────
-const WINDSOR_API_KEY = '75619b313cc2bf427629ad20b9edc086bfc1';
 const ACCOUNT_ID      = '981226049980268';
 const REFRESH_MS      = 30 * 60 * 1000;
 const FIELDS = [
@@ -564,7 +563,7 @@ let allAds = [], summary = {};
 async function loadData() {
   setStatus('loading','● FETCHING LIVE META DATA...');
   try {
-    const url = `https://connectors.windsor.ai/facebook?api_key=${WINDSOR_API_KEY}&account_ids=${ACCOUNT_ID}&date_preset=last_14d&fields=${FIELDS}`;
+    const url = `/api/windsor?account_id=${ACCOUNT_ID}&fields=${FIELDS}`;
     const res = await fetch(url);
     if (!res.ok) { const t = await res.text(); throw new Error(`Windsor error ${res.status}: ${t.slice(0,200)}`); }
     const raw  = await res.json();
@@ -815,7 +814,7 @@ async function fetchClaudeInsights(ads, summary) {
 {"summary":"2-3 sentence verdict","topAction":"#1 action with creative name","alerts":[{"type":"warn|good|info","text":"..."},{"type":"warn|good|info","text":"..."},{"type":"warn|good|info","text":"..."}],"formatInsights":{"video":"2 sentences","gif":"2 sentences","static":"2 sentences"},"insightStrips":{"video":"1 sentence","gif":"1 sentence","static":"1 sentence"},"actionPlan":[{"priority":"p1|p2|p3|grow","emoji":"🚨","title":"label","headline":"creative","detail":"2 sentences"},{"priority":"grow","emoji":"🚀","title":"label","headline":"creative","detail":"2 sentences"},{"priority":"p2","emoji":"🎬","title":"label","headline":"creative","detail":"2 sentences"},{"priority":"p1","emoji":"🚨","title":"label","headline":"creative","detail":"2 sentences"},{"priority":"p2","emoji":"✍️","title":"label","headline":"creative","detail":"2 sentences"},{"priority":"p3","emoji":"🔁","title":"label","headline":"creative","detail":"2 sentences"}],"nextSteps":{"newHooks":["hook1","hook2","hook3","hook4"],"newCreativeIdeas":["idea1","idea2","idea3"],"pauseNow":["creative — reason","creative — reason"],"audienceSuggestions":["audience1","audience2","audience3"]},"learnings":[{"label":"Hook Intelligence","text":"..."},{"label":"Format Pattern","text":"..."},{"label":"Creative Angle","text":"..."},{"label":"Audience Signal","text":"..."},{"label":"Budget Efficiency","text":"..."},{"label":"Strategic Takeaway","text":"..."}],"budgetMove":"specific ₹ reallocation"}`;
 
   try {
-    const res = await fetch('/.netlify/functions/claude', {
+    const res = await fetch('/api/claude', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
