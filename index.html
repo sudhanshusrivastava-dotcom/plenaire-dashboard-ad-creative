@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plenaire India — Live Creative Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FAF7F2; --ink: #1A1714; --rose: #C97B6E; --rose-light: #F0D9D5;
+    --glacee: #6E8FA8; --glacee-light: #D5E3EE; --gold: #C9A86E; --gold-light: #F0E6D5;
+    --green: #6E9A7B; --red: #C96E6E; --muted: #8A8278; --border: #E8E2D9; --card: #FFFFFF;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--ink); line-height:1.6; }
+
+  /* ── HEADER ── */
+  .header { background:var(--ink); padding:40px 60px 36px; position:relative; overflow:hidden; }
+  .header::before { content:''; position:absolute; top:-60px; right:-60px; width:300px; height:300px; border-radius:50%; border:1px solid rgba(255,255,255,0.06); }
+  .header-eyebrow { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--gold); margin-bottom:12px; display:flex; align-items:center; gap:10px; }
+  .live-dot { width:7px; height:7px; background:#5CBA8A; border-radius:50%; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+  .header h1 { font-family:'Playfair Display',serif; font-size:38px; color:#fff; font-weight:400; line-height:1.15; }
+  .header h1 em { color:var(--rose); font-style:italic; }
+  .header-meta { margin-top:16px; display:flex; gap:28px; align-items:center; flex-wrap:wrap; }
+  .header-meta span { font-family:'DM Mono',monospace; font-size:11px; color:rgba(255,255,255,0.35); letter-spacing:1px; }
+  .header-meta .dot { width:3px; height:3px; background:rgba(255,255,255,0.15); border-radius:50%; }
+  .last-updated { font-family:'DM Mono',monospace; font-size:10px; color:rgba(255,255,255,0.25); margin-top:10px; }
+
+  /* ── STATUS BAR ── */
+  .status-bar { background:#111; border-bottom:1px solid #222; padding:10px 60px; display:flex; align-items:center; gap:16px; }
+  .status-bar span { font-family:'DM Mono',monospace; font-size:10px; color:rgba(255,255,255,0.3); letter-spacing:1px; }
+  .status-ok { color:#5CBA8A !important; } .status-loading { color:var(--gold) !important; } .status-error { color:var(--red) !important; }
+  .refresh-btn { margin-left:auto; background:transparent; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.4); font-family:'DM Mono',monospace; font-size:10px; letter-spacing:1px; padding:5px 14px; border-radius:4px; cursor:pointer; transition:.2s; }
+  .refresh-btn:hover { border-color:var(--gold); color:var(--gold); }
+
+  /* ── BREAKEVEN BAR ── */
+  .breakeven-bar { background:linear-gradient(90deg,#1f1a17,#2a2118); border-bottom:1px solid var(--border); padding:14px 60px; display:flex; align-items:center; gap:40px; flex-wrap:wrap; }
+  .be-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--gold); }
+  .be-items { display:flex; gap:36px; flex-wrap:wrap; }
+  .be-item { display:flex; flex-direction:column; gap:2px; }
+  .be-item .val { font-family:'DM Mono',monospace; font-size:17px; font-weight:500; color:#fff; }
+  .be-item .lbl { font-size:10px; color:rgba(255,255,255,0.3); letter-spacing:1px; text-transform:uppercase; }
+
+  /* ── MAIN ── */
+  .main { padding:44px 60px; max-width:1400px; margin:0 auto; }
+
+  /* ── SKELETON ── */
+  .skeleton { background:linear-gradient(90deg,#f0ebe3 25%,#e8e1d7 50%,#f0ebe3 75%); background-size:400% 100%; animation:shimmer 1.5s infinite; border-radius:6px; }
+  @keyframes shimmer { 0%{background-position:100% 0} 100%{background-position:-100% 0} }
+  .skeleton-card { height:180px; border-radius:12px; margin-bottom:20px; }
+  .skeleton-row { height:52px; border-radius:6px; margin-bottom:8px; }
+
+  /* ── SECTION HEAD ── */
+  .section-head { display:flex; align-items:baseline; gap:14px; margin-bottom:22px; padding-bottom:10px; border-bottom:1px solid var(--border); }
+  .section-head h2 { font-family:'Playfair Display',serif; font-size:24px; font-weight:400; }
+  .section-head .tag { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); padding:3px 10px; border:1px solid var(--border); border-radius:20px; }
+
+  /* ── FORMAT GRID ── */
+  .format-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-bottom:48px; }
+  .format-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:26px; position:relative; overflow:hidden; transition:transform .2s; }
+  .format-card:hover { transform:translateY(-2px); }
+  .fc-stripe { position:absolute; top:0; left:0; right:0; height:3px; }
+  .format-card.video .fc-stripe { background:linear-gradient(90deg,var(--rose),#e8a598); }
+  .format-card.gif .fc-stripe { background:linear-gradient(90deg,var(--gold),#e8d098); }
+  .format-card.static .fc-stripe { background:linear-gradient(90deg,var(--glacee),#98b8ce); }
+  .fc-type { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+  .fc-name { font-family:'Playfair Display',serif; font-size:19px; margin-bottom:18px; }
+  .fc-metrics { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .fc-metric { display:flex; flex-direction:column; gap:2px; }
+  .fc-metric .val { font-family:'DM Mono',monospace; font-size:17px; font-weight:500; }
+  .fc-metric .val.bad { color:var(--red); } .fc-metric .val.ok { color:var(--gold); } .fc-metric .val.good { color:var(--green); }
+  .fc-metric .lbl { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+  .fc-verdict { margin-top:18px; padding:11px 13px; border-radius:8px; font-size:12px; line-height:1.6; }
+
+  /* ── INSIGHT STRIP ── */
+  .insight-strip { background:#F0E6D5; border:1px solid #DDD0B8; border-radius:8px; padding:13px 18px; font-size:13px; color:#6B5030; margin-bottom:18px; line-height:1.6; }
+  .insight-strip strong { color:#3D2810; }
+  .divider { border:none; border-top:1px solid var(--border); margin:36px 0; }
+
+  /* ── TABLE ── */
+  .table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; margin-bottom:48px; }
+  .creative-table { width:100%; min-width:700px; border-collapse:collapse; background:var(--card); border-radius:12px; overflow:hidden; border:1px solid var(--border); font-size:13px; }
+  .creative-table thead tr { background:var(--ink); }
+  .creative-table thead th { padding:11px 15px; text-align:left; font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,0.45); font-weight:400; }
+  .creative-table tbody tr { border-bottom:1px solid var(--border); transition:background .15s; }
+  .creative-table tbody tr:hover { background:#FDFAF7; }
+  .creative-table tbody tr:last-child { border-bottom:none; }
+  .creative-table td { padding:13px 15px; vertical-align:top; }
+  .ad-name { font-weight:600; font-size:13px; display:block; margin-bottom:3px; }
+  .ad-context { font-size:11px; color:var(--muted); font-family:'DM Mono',monospace; }
+  .mono-val { font-family:'DM Mono',monospace; font-size:13px; }
+  .mono-val.red { color:var(--red); } .mono-val.gold { color:#9A7030; font-weight:500; } .mono-val.green { color:var(--green); font-weight:600; } .mono-val.muted { color:var(--muted); }
+  .rank-badge { display:inline-flex; font-family:'DM Mono',monospace; font-size:9px; letter-spacing:1px; text-transform:uppercase; padding:3px 7px; border-radius:4px; margin:1px; }
+  .rank-above { background:#EEFAF2; color:#2E6545; } .rank-avg { background:#F5F5F5; color:var(--muted); } .rank-below { background:#FFF0EE; color:#8A3D30; } .rank-unk { background:#F5F5F5; color:#BCBCBC; }
+  .funnel-row { display:flex; gap:4px; align-items:center; flex-wrap:wrap; font-size:11px; font-family:'DM Mono',monospace; }
+  .funnel-step { display:flex; flex-direction:column; align-items:center; gap:1px; }
+  .funnel-num { color:var(--ink); font-weight:500; font-size:12px; } .funnel-label { font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--muted); }
+  .funnel-arrow { color:var(--border); font-size:13px; margin-bottom:10px; }
+  .roas-bar-wrap { display:flex; align-items:center; gap:8px; }
+  .roas-bar-bg { flex:1; height:4px; background:var(--border); border-radius:4px; max-width:70px; }
+  .roas-bar { height:4px; border-radius:4px; }
+  .format-pill { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; padding:4px 12px; border-radius:20px; font-weight:500; display:inline-block; }
+  .pill-video { background:var(--rose-light); color:#8A3D30; } .pill-gif { background:var(--gold-light); color:#8A6B30; } .pill-static { background:var(--glacee-light); color:#2E4F65; }
+
+  /* ── PROFIT LADDER ── */
+  .profit-ladder { background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:48px; }
+  .pl-header { background:var(--ink); padding:18px 26px; display:flex; align-items:center; justify-content:space-between; }
+  .pl-header h3 { font-family:'Playfair Display',serif; font-size:19px; color:#fff; font-weight:400; }
+  .pl-header span { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--gold); }
+  .pl-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .pl-inner { min-width:780px; }
+  .pl-row { display:grid; grid-template-columns:180px 1fr 90px 90px 220px; border-bottom:1px solid var(--border); align-items:center; }
+  .pl-row:last-child { border-bottom:none; }
+  .pl-row.header-row { background:#F8F5F0; }
+  .pl-cell { padding:12px 14px; font-family:'DM Mono',monospace; font-size:11px; border-right:1px solid var(--border); min-width:0; overflow:hidden; }
+  .pl-cell:last-child { border-right:none; }
+  .pl-cell.header { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); }
+  .pl-cell.creative-cell { font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500; word-break:break-word; line-height:1.4; }
+  .pl-gap-bar { height:5px; background:var(--border); border-radius:3px; overflow:hidden; }
+  .pl-gap-fill { height:5px; border-radius:3px; }
+
+  /* ── CLAUDE AI PANEL ── */
+  .claude-panel { background:linear-gradient(135deg,#1A1714 0%,#221C18 100%); border:1px solid #3D2E24; border-radius:16px; padding:28px 32px; margin-bottom:48px; position:relative; overflow:hidden; }
+  .claude-panel::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--rose),var(--gold),var(--glacee)); }
+  .claude-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:12px; }
+  .claude-title { display:flex; align-items:center; gap:12px; }
+  .claude-icon { width:34px; height:34px; background:linear-gradient(135deg,var(--rose),var(--gold)); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+  .claude-title h3 { font-family:'Playfair Display',serif; font-size:20px; color:#FAF7F2; font-weight:400; }
+  .claude-title span { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--gold); display:block; margin-top:2px; }
+  .claude-badge { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; padding:4px 12px; border-radius:20px; border:1px solid #3D2E24; color:rgba(255,255,255,0.35); }
+  .claude-badge.thinking { color:var(--gold); border-color:#5A4020; animation:pulse 1.5s infinite; }
+  .claude-badge.ready { color:#5CBA8A; border-color:#2A5A3A; }
+  .claude-badge.error { color:var(--red); border-color:#5A2020; }
+  .claude-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:16px; }
+  .claude-block { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:16px 18px; }
+  .claude-block-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,0.25); margin-bottom:8px; }
+  .claude-block p { font-size:12.5px; color:rgba(255,255,255,0.7); line-height:1.65; }
+  .claude-block.span2 { grid-column:span 2; }
+  .claude-block.span3 { grid-column:1/-1; }
+  .claude-top-action { background:rgba(201,168,110,0.08); border:1px solid rgba(201,168,110,0.2); border-radius:10px; padding:16px 20px; display:flex; gap:14px; align-items:flex-start; }
+  .claude-top-action .action-icon { font-size:22px; flex-shrink:0; margin-top:1px; }
+  .claude-top-action .action-text { font-size:13px; color:#F0E6D5; line-height:1.6; }
+  .claude-top-action .action-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--gold); margin-bottom:5px; }
+  .claude-alerts { display:flex; flex-direction:column; gap:8px; }
+  .claude-alert { display:flex; align-items:flex-start; gap:10px; padding:10px 14px; border-radius:8px; font-size:12px; line-height:1.5; }
+  .claude-alert.warn { background:rgba(201,110,110,0.1); border:1px solid rgba(201,110,110,0.2); color:#F0D5D5; }
+  .claude-alert.info { background:rgba(110,143,168,0.1); border:1px solid rgba(110,143,168,0.2); color:#D5E3EE; }
+  .claude-alert.good { background:rgba(110,154,123,0.1); border:1px solid rgba(110,154,123,0.2); color:#D5EDE0; }
+  .claude-skeleton { height:14px; background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%); background-size:400% 100%; animation:shimmer 1.5s infinite; border-radius:4px; margin-bottom:8px; }
+  .cfi-item { padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:8px; }
+  .cfi-format { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; margin-bottom:6px; }
+  .cfi-format.video { color:var(--rose); } .cfi-format.gif { color:var(--gold); } .cfi-format.static { color:var(--glacee); }
+  .cfi-text { font-size:12px; color:rgba(255,255,255,0.6); line-height:1.55; }
+  .claude-timestamp { margin-top:14px; font-family:'DM Mono',monospace; font-size:10px; color:rgba(255,255,255,0.2); letter-spacing:1px; }
+
+  /* ── ACTION GRID ── */
+  .action-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:40px; }
+  .action-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:22px; }
+  .priority { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; padding:3px 10px; border-radius:20px; display:inline-block; margin-bottom:12px; }
+  .priority.p1 { background:#FFF0EE; color:var(--red); } .priority.p2 { background:var(--gold-light); color:#8A6B30; }
+  .priority.p3 { background:var(--glacee-light); color:#2E4F65; } .priority.grow { background:#EEFAF2; color:#2E6545; }
+  .action-card h4 { font-family:'Playfair Display',serif; font-size:16px; font-weight:400; margin-bottom:8px; }
+  .action-card p { font-size:12.5px; color:var(--muted); line-height:1.6; }
+
+  /* ── NEXT STEPS (new) ── */
+  .next-steps-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:48px; }
+  .ns-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:22px; }
+  .ns-card-header { display:flex; align-items:center; gap:10px; margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+  .ns-card-icon { font-size:20px; }
+  .ns-card-title { font-family:'Playfair Display',serif; font-size:17px; font-weight:400; }
+  .ns-card-tag { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; padding:3px 8px; border-radius:20px; margin-left:auto; }
+  .ns-card-tag.hook { background:var(--rose-light); color:#8A3D30; }
+  .ns-card-tag.pause { background:#FFF0EE; color:var(--red); }
+  .ns-card-tag.audience { background:var(--glacee-light); color:#2E4F65; }
+  .ns-card-tag.creative { background:var(--gold-light); color:#8A6B30; }
+  .ns-item { display:flex; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); font-size:13px; line-height:1.55; }
+  .ns-item:last-child { border-bottom:none; padding-bottom:0; }
+  .ns-item-num { font-family:'DM Mono',monospace; font-size:10px; color:var(--gold); font-weight:500; min-width:20px; margin-top:2px; }
+  .ns-item-text { color:var(--ink); }
+  .ns-item-text strong { color:var(--ink); font-weight:600; }
+  .ns-item-text span { display:block; font-size:11px; color:var(--muted); margin-top:2px; font-family:'DM Mono',monospace; }
+
+  /* ── LEARNING BOX ── */
+  .learning-box { background:var(--ink); border-radius:16px; padding:36px 44px; margin-bottom:48px; position:relative; overflow:hidden; }
+  .learning-box::before { content:''; position:absolute; top:-80px; right:-80px; width:300px; height:300px; border-radius:50%; border:1px solid rgba(255,255,255,0.04); }
+  .learning-box::after { content:''; position:absolute; bottom:-60px; left:-60px; width:200px; height:200px; border-radius:50%; border:1px solid rgba(255,255,255,0.04); }
+  .learning-eyebrow { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:3px; text-transform:uppercase; color:var(--gold); margin-bottom:16px; }
+  .learning-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; position:relative; z-index:1; }
+  .learning-item { padding:20px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; }
+  .learning-item-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,0.3); margin-bottom:8px; }
+  .learning-item-text { font-size:13px; color:rgba(255,255,255,0.75); line-height:1.65; }
+  .learning-item-text strong { color:#FAF7F2; }
+
+  /* ── ERROR / FOOTER ── */
+  .error-box { background:#FFF0EE; border:1px solid #F0C5BF; border-radius:12px; padding:32px; text-align:center; color:#8A3D30; margin:40px 0; }
+  .error-box h3 { font-family:'Playfair Display',serif; font-size:22px; margin-bottom:10px; }
+  .report-footer { border-top:1px solid var(--border); padding:28px 60px; display:flex; justify-content:space-between; align-items:center; background:#F5F1EB; }
+  .footer-brand { font-family:'Playfair Display',serif; font-size:18px; color:var(--muted); }
+  .footer-meta { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:1.5px; text-transform:uppercase; }
+
+  @media(max-width:900px){
+    .main,.header,.breakeven-bar,.report-footer { padding-left:24px; padding-right:24px; }
+    .format-grid,.action-grid,.next-steps-grid,.learning-grid { grid-template-columns:1fr; }
+    .claude-grid { grid-template-columns:1fr; }
+  }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-6px)} 80%{transform:translateX(6px)} }
+</style>
+</head>
+<body>
+
+<!-- ── PASSWORD + SETUP GATE ───────────────────────────────────────────── -->
+<div id="auth-gate" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#1A1714 0%,#2A2118 50%,#1A1714 100%);display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;overflow-y:auto;padding:24px;">
+
+  <!-- STEP 1: LOGIN -->
+  <div id="step-login" style="background:#FFFFFF08;border:1px solid #FFFFFF12;border-radius:20px;padding:48px 52px;width:100%;max-width:420px;text-align:center;box-shadow:0 32px 80px rgba(0,0,0,0.5);">
+    <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,#C97B6E,#C9A86E);margin:0 auto 24px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:22px;color:#fff;font-weight:700;">P</div>
+    <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#C9A86E;margin-bottom:10px;">PLENAIRE INDIA</div>
+    <div style="font-family:'Playfair Display',serif;font-size:26px;color:#FAF7F2;font-weight:400;margin-bottom:6px;">Creative Dashboard</div>
+    <div style="font-size:13px;color:#8A8278;margin-bottom:32px;">Enter your credentials to access</div>
+    <div style="margin-bottom:14px;text-align:left;">
+      <label style="font-size:11px;font-family:'DM Mono',monospace;letter-spacing:2px;text-transform:uppercase;color:#8A8278;display:block;margin-bottom:6px;">Username</label>
+      <input id="auth-user" type="text" placeholder="Enter username" autocomplete="username" style="width:100%;padding:12px 16px;background:#FFFFFF08;border:1px solid #FFFFFF15;border-radius:10px;color:#FAF7F2;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;box-sizing:border-box;" onfocus="this.style.borderColor='#C9A86E'" onblur="this.style.borderColor='#FFFFFF15'" onkeydown="if(event.key==='Enter')document.getElementById('auth-pass').focus()">
+    </div>
+    <div style="margin-bottom:24px;text-align:left;">
+      <label style="font-size:11px;font-family:'DM Mono',monospace;letter-spacing:2px;text-transform:uppercase;color:#8A8278;display:block;margin-bottom:6px;">Password</label>
+      <div style="position:relative;">
+        <input id="auth-pass" type="password" placeholder="Enter password" autocomplete="current-password" style="width:100%;padding:12px 16px;padding-right:44px;background:#FFFFFF08;border:1px solid #FFFFFF15;border-radius:10px;color:#FAF7F2;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;box-sizing:border-box;" onfocus="this.style.borderColor='#C9A86E'" onblur="this.style.borderColor='#FFFFFF15'" onkeydown="if(event.key==='Enter')tryLogin()">
+        <span onclick="togglePw()" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:16px;color:#8A8278;user-select:none;" id="pw-toggle">👁</span>
+      </div>
+    </div>
+    <div id="auth-error" style="display:none;margin-bottom:16px;padding:10px 14px;background:#C96E6E18;border:1px solid #C96E6E40;border-radius:8px;font-size:12px;color:#C96E6E;font-family:'DM Mono',monospace;letter-spacing:1px;">✗ &nbsp;Incorrect username or password</div>
+    <button onclick="tryLogin()" style="width:100%;padding:13px;background:linear-gradient(135deg,#C97B6E,#C9A86E);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;letter-spacing:0.5px;transition:opacity .2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Access Dashboard →</button>
+    <div style="margin-top:20px;font-size:11px;color:#4A4440;font-family:'DM Mono',monospace;">SECURED · PLENAIRE INDIA · META ADS</div>
+  </div>
+
+  <!-- STEP 2: BUSINESS SETUP -->
+  <div id="step-setup" style="display:none;background:#FFFFFF08;border:1px solid #FFFFFF12;border-radius:20px;padding:44px 52px;width:100%;max-width:560px;box-shadow:0 32px 80px rgba(0,0,0,0.5);">
+    <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#C9A86E;margin-bottom:8px;">STEP 2 OF 2</div>
+    <div style="font-family:'Playfair Display',serif;font-size:26px;color:#FAF7F2;font-weight:400;margin-bottom:6px;">Business Context</div>
+    <div style="font-size:13px;color:#8A8278;margin-bottom:28px;">Claude uses this to personalise all analysis and recommendations.</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+      <div>
+        <label style="font-size:11px;font-family:'DM Mono',monospace;letter-spacing:2px;text-transform:uppercase;color:#8A8278;display:block;margin-bottom:6px;">Industry / Category</label>
+        <select id="setup-industry" style="width:100%;padding:11px 14px;background:#FFFFFF08;border:1px solid #FFFFFF15;border-radius:10px;color:#FAF7F2;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;-webkit-appearance:none;">
+          <option value="D2C Skincare">D2C Skincare</option>
+          <option value="D2C Haircare">D2C Haircare</option>
+          <option value="D2C Wellness / Supplements">D2C Wellness / Supplements</option>
+          <option value="D2C Fashion / Apparel">D2C Fashion / Apparel</option>
+          <option value="D2C Food & Beverage">D2C Food & Beverage</option>
+          <option value="D2C Home & Lifestyle">D2C Home & Lifestyle</option>
+          <option value="D2C Electronics / Gadgets">D2C Electronics / Gadgets</option>
+          <option value="E-commerce (Multi-category)">E-commerce (Multi-category)</option>
+          <option value="SaaS / Software">SaaS / Software</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11px;font-family:'DM Mono',monospace;letter-spacing:2px;text-transform:uppercase;color:#8A8278;display:block;margin-bottom:6px;">Brand Name</label>
+        <input id="setup-brand" type="text" placeholder="e.g. Plenaire India" value="Plenaire India" style="width:100%;padding:11px 14px;background:#FFFFFF08;border:1px solid #FFFFFF15;border-radius:10px;color:#FAF7F2;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;box-sizing:border-box;" onfocus="this.style.borderColor='#C9A86E'" onblur="this.style.borderColor='#FFFFFF15'">
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;">
+      <div>
+        <label style="font-size:11px;font-family:'DM Mono',monospace;letter-spacing:2px;text-transform:uppercase;color:#8A8278;display:block;margin-bottom:6px;">Gross Margin %</label>
+        <input id="setup-margin" type="number" placeholder="60" value="60" min="1" max="99" style="width:100%;padding:11px 14px;background:#FFFFFF08;border:1px solid #FFFFFF15;border-radius:10px;color:#FAF7F2;font-size:13px;font-family:'DM Mono',monospace;outline:none;transition:border-color .2s;box-sizing:border-box;" onfocus="this.style.borderColor='#C9A86E'" onblur="this.style.borderColor='#FFFFFF15'">
+      </div>
+      <div>
+        <label style="font-size:11px;font-family:'DM Mono',monospace;letter-spacing:2px;text-transform:uppercase;color:#8A8278;display:block;margin-bottom:6px;">Target ROAS</label>
+        <input id="setup-target-roas" type="number" placeholder="3.0" value="3.0" step="0.1" min="0.5" style="width:100%;padding:11px 14px;background:#FFFFFF08;border:1px solid #FFFFFF15;border-radius:10px;color:#FAF7F2;font-size:13px;font-family:'DM Mono',monospace;outline:none;transition:border-color .2s;box-sizing:border-box;" onfocus="this.style.borderColor='#C9A86E'" onblur="this.style.borderColor='#FFFFFF15'">
+      </div>
+      <div>
+        <label style="font-size:11px;font-family:'DM Mono',monospace;letter-spacing:2px;text-transform:uppercase;color:#8A8278;display:block;margin-bottom:6px;">Avg Order Value ₹</label>
+        <input id="setup-aov" type="number" placeholder="1200" value="1200" style="width:100%;padding:11px 14px;background:#FFFFFF08;border:1px solid #FFFFFF15;border-radius:10px;color:#FAF7F2;font-size:13px;font-family:'DM Mono',monospace;outline:none;transition:border-color .2s;box-sizing:border-box;" onfocus="this.style.borderColor='#C9A86E'" onblur="this.style.borderColor='#FFFFFF15'">
+      </div>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <label style="font-size:11px;font-family:'DM Mono',monospace;letter-spacing:2px;text-transform:uppercase;color:#8A8278;display:block;margin-bottom:6px;">Primary Audience</label>
+      <input id="setup-audience" type="text" placeholder="e.g. Women 22-35, skincare-conscious, urban India" style="width:100%;padding:11px 14px;background:#FFFFFF08;border:1px solid #FFFFFF15;border-radius:10px;color:#FAF7F2;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;box-sizing:border-box;" onfocus="this.style.borderColor='#C9A86E'" onblur="this.style.borderColor='#FFFFFF15'">
+    </div>
+
+    <div style="margin-bottom:24px;">
+      <label style="font-size:11px;font-family:'DM Mono',monospace;letter-spacing:2px;text-transform:uppercase;color:#8A8278;display:block;margin-bottom:6px;">Key Product / Hero SKU</label>
+      <input id="setup-product" type="text" placeholder="e.g. Rose Jelly Cleanser, Glacee Moisturiser" style="width:100%;padding:11px 14px;background:#FFFFFF08;border:1px solid #FFFFFF15;border-radius:10px;color:#FAF7F2;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;box-sizing:border-box;" onfocus="this.style.borderColor='#C9A86E'" onblur="this.style.borderColor='#FFFFFF15'">
+    </div>
+
+    <!-- Computed breakeven display -->
+    <div style="background:rgba(201,168,110,0.08);border:1px solid rgba(201,168,110,0.2);border-radius:10px;padding:14px 18px;margin-bottom:24px;display:flex;gap:32px;flex-wrap:wrap;">
+      <div><div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(201,168,110,0.7);margin-bottom:4px;">Breakeven ROAS</div><div id="be-computed" style="font-family:'DM Mono',monospace;font-size:22px;color:#C9A86E;font-weight:500;">1.67×</div></div>
+      <div><div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:4px;">Formula</div><div style="font-size:12px;color:rgba(255,255,255,0.4);font-family:'DM Mono',monospace;margin-top:4px;">1 ÷ gross margin</div></div>
+    </div>
+
+    <button onclick="saveSetup()" style="width:100%;padding:13px;background:linear-gradient(135deg,#C97B6E,#C9A86E);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;letter-spacing:0.5px;transition:opacity .2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Launch Dashboard →</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-eyebrow"><div class="live-dot"></div><span id="header-brand">Plenaire India</span> · Meta Ads · Live Creative Dashboard</div>
+  <h1>What's Working,<br>What's Not &amp; <em>Why</em></h1>
+  <div class="header-meta">
+    <span>Last 14 Days</span><div class="dot"></div>
+    <span id="ad-count">Loading...</span><div class="dot"></div>
+    <span>3 Formats: Video · GIF · Static</span><div class="dot"></div>
+    <span id="total-spend-header">—</span>
+  </div>
+  <div class="last-updated" id="last-updated">Fetching live data...</div>
+</div>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <span id="status-text" class="status-loading">● CONNECTING TO META ADS...</span>
+  <button class="refresh-btn" onclick="loadData()">↻ REFRESH NOW</button>
+</div>
+
+<!-- BREAKEVEN BAR -->
+<div class="breakeven-bar">
+  <div class="be-label">Profitability Context</div>
+  <div class="be-items">
+    <div class="be-item"><span class="val" id="be-margin-val" style="color:var(--gold)">60%</span><span class="lbl">Gross Margin</span></div>
+    <div class="be-item"><span class="val" id="be-roas-val" style="color:var(--rose)">1.67×</span><span class="lbl">Breakeven ROAS</span></div>
+    <div class="be-item"><span class="val" style="color:var(--red)" id="avg-roas-val">—</span><span class="lbl">Current Avg ROAS</span></div>
+    <div class="be-item"><span class="val" id="be-target-val" style="color:var(--muted)">3.0×</span><span class="lbl">Target ROAS</span></div>
+    <div class="be-item"><span class="val" style="color:var(--red)" id="total-spend-bar">—</span><span class="lbl">Total Spend (14d)</span></div>
+    <div class="be-item"><span class="val" style="color:var(--red)" id="total-revenue-bar">—</span><span class="lbl">Total Revenue (14d)</span></div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ── SECTION 1: FORMAT OVERVIEW ── -->
+  <div class="section-head">
+    <h2>Format Overview</h2>
+    <span class="tag">Live · Auto-updates every 30 min</span>
+  </div>
+  <div class="format-grid" id="format-grid">
+    <div class="skeleton skeleton-card"></div>
+    <div class="skeleton skeleton-card"></div>
+    <div class="skeleton skeleton-card"></div>
+  </div>
+
+  <!-- ── SECTION 2: VIDEO DEEP DIVE ── -->
+  <div class="section-head">
+    <span class="format-pill pill-video">Video</span>
+    <h2 style="margin-left:8px">Deep Dive — Video Creatives</h2>
+  </div>
+  <div class="insight-strip" id="video-insight-strip"><strong>Key signal:</strong> Watch the P25→P100 drop-off. Hook fails = nobody past 25%. Past 75% but no click = CTA/offer issue. Under 3s avg watch = fix the first frame.</div>
+  <div class="table-scroll"><div id="video-table-wrap"><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div></div></div>
+
+  <!-- ── SECTION 3: GIF DEEP DIVE ── -->
+  <div class="section-head" style="margin-top:12px">
+    <span class="format-pill pill-gif">GIF / Motion</span>
+    <h2 style="margin-left:8px">Deep Dive — GIF Creatives</h2>
+  </div>
+  <div class="insight-strip" id="gif-insight-strip"><strong>Why GIF wins:</strong> Motion without sound, loops for multiple impressions, showcases texture perfectly for skincare.</div>
+  <div class="table-scroll"><div id="gif-table-wrap"><div class="skeleton skeleton-row"></div></div></div>
+
+  <!-- ── SECTION 4: STATIC DEEP DIVE ── -->
+  <div class="section-head" style="margin-top:12px">
+    <span class="format-pill pill-static">Static</span>
+    <h2 style="margin-left:8px">Deep Dive — Static Creatives</h2>
+  </div>
+  <div class="insight-strip" id="static-insight-strip"><strong>Pattern:</strong> Sensory-specific copy wins. Brand announcement style fails on cold audiences.</div>
+  <div class="table-scroll"><div id="static-table-wrap"><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div></div></div>
+
+  <hr class="divider">
+
+  <!-- ── SECTION 5: CLAUDE AI ANALYSIS ── -->
+  <div class="section-head">
+    <h2>AI Creative Intelligence</h2>
+    <span class="tag" id="claude-tag">Claude · Refreshes with data</span>
+  </div>
+  <div class="claude-panel" id="claude-panel">
+    <div class="claude-header">
+      <div class="claude-title">
+        <div class="claude-icon">✦</div>
+        <div><h3>Claude's Deep Analysis</h3><span id="claude-subtitle">Analysing all creatives...</span></div>
+      </div>
+      <span class="claude-badge" id="claude-badge">● WAITING FOR DATA</span>
+    </div>
+    <div id="claude-content">
+      <div style="display:flex;flex-direction:column;gap:8px;padding:6px 0">
+        <div class="claude-skeleton" style="width:85%"></div>
+        <div class="claude-skeleton" style="width:70%"></div>
+        <div class="claude-skeleton"></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ── SECTION 6: PROFITABILITY LADDER ── -->
+  <div class="section-head">
+    <h2>Profitability Ladder</h2>
+    <span class="tag" id="ladder-tag">All creatives · breakeven computed from margin</span>
+  </div>
+  <div id="profit-ladder-wrap">
+    <div class="skeleton skeleton-row"></div>
+    <div class="skeleton skeleton-row"></div>
+    <div class="skeleton skeleton-row"></div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ── SECTION 7: ACTION PLAN ── -->
+  <div class="section-head">
+    <h2>Immediate Action Plan</h2>
+    <span class="tag" id="action-plan-tag">Claude · Based on live data</span>
+  </div>
+  <div class="action-grid" id="action-grid">
+    <div class="action-card"><div class="skeleton" style="height:14px;width:60%;margin-bottom:10px;border-radius:4px"></div><div class="skeleton" style="height:18px;width:80%;margin-bottom:12px;border-radius:4px"></div><div class="skeleton" style="height:60px;border-radius:4px"></div></div>
+    <div class="action-card"><div class="skeleton" style="height:14px;width:60%;margin-bottom:10px;border-radius:4px"></div><div class="skeleton" style="height:18px;width:80%;margin-bottom:12px;border-radius:4px"></div><div class="skeleton" style="height:60px;border-radius:4px"></div></div>
+    <div class="action-card"><div class="skeleton" style="height:14px;width:60%;margin-bottom:10px;border-radius:4px"></div><div class="skeleton" style="height:18px;width:80%;margin-bottom:12px;border-radius:4px"></div><div class="skeleton" style="height:60px;border-radius:4px"></div></div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ── SECTION 8: NEXT STEPS ── -->
+  <div class="section-head">
+    <h2>Next Steps</h2>
+    <span class="tag" id="next-steps-tag">Claude · New hooks, creatives & audiences</span>
+  </div>
+  <div class="next-steps-grid" id="next-steps-grid">
+    <div class="ns-card"><div class="skeleton" style="height:200px;border-radius:8px"></div></div>
+    <div class="ns-card"><div class="skeleton" style="height:200px;border-radius:8px"></div></div>
+    <div class="ns-card"><div class="skeleton" style="height:200px;border-radius:8px"></div></div>
+    <div class="ns-card"><div class="skeleton" style="height:200px;border-radius:8px"></div></div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ── SECTION 9: LEARNINGS ── -->
+  <div class="section-head">
+    <h2>Key Learnings</h2>
+    <span class="tag" id="learnings-tag">Claude · This 14-day period</span>
+  </div>
+  <div class="learning-box" id="learning-box">
+    <div class="learning-eyebrow">✦ WHAT THE DATA IS TEACHING YOU</div>
+    <div class="learning-grid">
+      <div class="learning-item"><div class="skeleton" style="height:80px;background:rgba(255,255,255,0.06);border-radius:6px"></div></div>
+      <div class="learning-item"><div class="skeleton" style="height:80px;background:rgba(255,255,255,0.06);border-radius:6px"></div></div>
+      <div class="learning-item"><div class="skeleton" style="height:80px;background:rgba(255,255,255,0.06);border-radius:6px"></div></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="report-footer">
+  <div class="footer-brand" id="footer-brand">Plenaire India</div>
+  <div class="footer-meta" id="footer-timestamp">Live Dashboard · Meta Ads · Auto-refresh every 30 min</div>
+</div>
+
+<script>
+// ─── CREDENTIALS ──────────────────────────────────────────────────────────────
+const USERS = [
+  { username: 'plenaire', password: 'Grapes@2026' },
+  { username: 'team',     password: 'rosejellyteam' },
+];
+const SESSION_KEY = 'plenaire_auth';
+const SETUP_KEY   = 'plenaire_setup';
+
+// ─── BUSINESS CONTEXT (set by setup screen) ───────────────────────────────────
+let BIZ = {
+  brand: 'Plenaire India', industry: 'D2C Skincare',
+  margin: 60, targetRoas: 3.0, aov: 1200,
+  audience: 'Women 22-35, skincare-conscious, urban India',
+  product: 'Rose Jelly Cleanser, Glacee Moisturiser',
+};
+function breakevenRoas() { return +(1 / (BIZ.margin / 100)).toFixed(2); }
+
+// ─── AUTH ─────────────────────────────────────────────────────────────────────
+function tryLogin() {
+  const u = document.getElementById('auth-user').value.trim().toLowerCase();
+  const p = document.getElementById('auth-pass').value;
+  const match = USERS.find(x => x.username === u && x.password === p);
+  if (match) {
+    sessionStorage.setItem(SESSION_KEY, btoa(u + ':' + p));
+    // Check if setup already done
+    const saved = localStorage.getItem(SETUP_KEY);
+    if (saved) {
+      try { BIZ = JSON.parse(saved); } catch(e) {}
+      launchDashboard();
+    } else {
+      document.getElementById('step-login').style.display = 'none';
+      document.getElementById('step-setup').style.display = 'block';
+    }
+  } else {
+    document.getElementById('auth-error').style.display = 'block';
+    document.getElementById('auth-pass').value = '';
+    document.getElementById('auth-pass').focus();
+    const gate = document.querySelector('#auth-gate > div:not([style*="display:none"])');
+    if (gate) { gate.style.animation = 'shake 0.4s ease'; setTimeout(() => gate.style.animation = '', 400); }
+  }
+}
+function togglePw() {
+  const i = document.getElementById('auth-pass'), t = document.getElementById('pw-toggle');
+  i.type = i.type === 'password' ? 'text' : 'password';
+  t.textContent = i.type === 'password' ? '👁' : '🙈';
+}
+function checkSession() {
+  const saved = sessionStorage.getItem(SESSION_KEY);
+  if (!saved) return false;
+  try { const [u,p] = atob(saved).split(':'); return USERS.some(x => x.username===u && x.password===p); } catch { return false; }
+}
+
+// ─── SETUP ────────────────────────────────────────────────────────────────────
+document.getElementById('setup-margin').addEventListener('input', updateBeComputed);
+function updateBeComputed() {
+  const m = parseFloat(document.getElementById('setup-margin').value)||60;
+  document.getElementById('be-computed').textContent = (1/(m/100)).toFixed(2) + '×';
+}
+function saveSetup() {
+  BIZ = {
+    brand:      document.getElementById('setup-brand').value.trim() || 'Plenaire India',
+    industry:   document.getElementById('setup-industry').value,
+    margin:     parseFloat(document.getElementById('setup-margin').value)||60,
+    targetRoas: parseFloat(document.getElementById('setup-target-roas').value)||3.0,
+    aov:        parseFloat(document.getElementById('setup-aov').value)||1200,
+    audience:   document.getElementById('setup-audience').value.trim(),
+    product:    document.getElementById('setup-product').value.trim(),
+  };
+  localStorage.setItem(SETUP_KEY, JSON.stringify(BIZ));
+  launchDashboard();
+}
+function launchDashboard() {
+  document.getElementById('auth-gate').style.display = 'none';
+  applyBizContext();
+  loadData();
+  setInterval(loadData, REFRESH_MS);
+}
+function applyBizContext() {
+  const be = breakevenRoas();
+  document.getElementById('header-brand').textContent = BIZ.brand;
+  document.getElementById('footer-brand').textContent = BIZ.brand;
+  document.getElementById('be-margin-val').textContent = BIZ.margin + '%';
+  document.getElementById('be-roas-val').textContent   = be + '×';
+  document.getElementById('be-target-val').textContent = BIZ.targetRoas + '×';
+  document.getElementById('ladder-tag').textContent    = `All creatives · breakeven = ${be}×`;
+  document.getElementById('claude-subtitle').textContent = `${BIZ.brand} · ${BIZ.industry} · Last 14 Days`;
+}
+
+// ─── WINDSOR CONFIG ───────────────────────────────────────────────────────────
+const WINDSOR_API_KEY = '75619b313cc2bf427629ad20b9edc086bfc1';
+const ACCOUNT_ID      = '981226049980268';
+const REFRESH_MS      = 30 * 60 * 1000;
+const FIELDS = [
+  'ad_name','campaign','adset_name','spend','impressions','clicks','ctr','cpm',
+  'actions_purchase','action_values_purchase',
+  'website_purchase_roas_offsite_conversion_fb_pixel_purchase',
+  'actions_add_to_cart','actions_view_content','actions_initiate_checkout',
+  'cost_per_action_type_add_to_cart','cost_per_action_type_initiate_checkout',
+  'video_p25_watched_actions_video_view','video_p50_watched_actions_video_view',
+  'video_p75_watched_actions_video_view','video_p100_watched_actions_video_view',
+  'video_avg_time_watched_actions_video_view',
+  'quality_ranking','engagement_rate_ranking','conversion_rate_ranking',
+].join(',');
+
+let allAds = [], summary = {};
+
+async function loadData() {
+  setStatus('loading','● FETCHING LIVE META DATA...');
+  try {
+    const url = `https://connectors.windsor.ai/facebook?api_key=${WINDSOR_API_KEY}&account_ids=${ACCOUNT_ID}&date_preset=last_14d&fields=${FIELDS}`;
+    const res = await fetch(url);
+    if (!res.ok) { const t = await res.text(); throw new Error(`Windsor error ${res.status}: ${t.slice(0,200)}`); }
+    const raw  = await res.json();
+    const allRows = Array.isArray(raw) ? raw : (raw.data||[]);
+    const rows = allRows.filter(r => !r.account_id || r.account_id === ACCOUNT_ID);
+    if (!rows.length) throw new Error('No data returned — check Windsor API key and connector');
+
+    const map = {};
+    rows.forEach(r => {
+      const k = r.ad_name;
+      if (!map[k]) { map[k] = { ...r, _count:1 }; }
+      else {
+        const m = map[k];
+        ['spend','impressions','clicks','actions_purchase','action_values_purchase',
+         'actions_add_to_cart','actions_view_content','actions_initiate_checkout',
+         'video_p25_watched_actions_video_view','video_p50_watched_actions_video_view',
+         'video_p75_watched_actions_video_view','video_p100_watched_actions_video_view'].forEach(f => {
+          m[f] = (parseFloat(m[f])||0) + (parseFloat(r[f])||0);
+        });
+        const nr = parseFloat(r.website_purchase_roas_offsite_conversion_fb_pixel_purchase)||0;
+        const cr = parseFloat(m.website_purchase_roas_offsite_conversion_fb_pixel_purchase)||0;
+        if (nr > cr) {
+          m.website_purchase_roas_offsite_conversion_fb_pixel_purchase = nr;
+          m.quality_ranking = r.quality_ranking; m.engagement_rate_ranking = r.engagement_rate_ranking;
+          m.conversion_rate_ranking = r.conversion_rate_ranking; m.campaign = r.campaign;
+        }
+        const wt = parseFloat(r.video_avg_time_watched_actions_video_view)||0;
+        if (wt > 0) { m._wt_sum=(m._wt_sum||0)+wt; m._wt_n=(m._wt_n||0)+1; m.video_avg_time_watched_actions_video_view=m._wt_sum/m._wt_n; }
+        m._count++;
+      }
+    });
+
+    allAds = Object.values(map).map(ad => ({ ...ad, format: classify(ad.ad_name||'') }));
+    summary = buildSummary(allAds);
+    renderAll();
+    fetchClaudeInsights(allAds, summary);
+    const now = new Date();
+    setStatus('ok', `● LIVE · ${allAds.length} CREATIVES · Last 14 Days`);
+    document.getElementById('last-updated').textContent = `Last updated: ${now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})} · ${now.toLocaleDateString('en-IN')}`;
+    document.getElementById('footer-timestamp').textContent = `Live · Last fetched ${now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})} · Auto-refresh 30 min`;
+  } catch(e) {
+    setStatus('error','● ERROR: ' + e.message);
+    showError(e.message);
+  }
+}
+
+function setStatus(t,txt) {
+  const el = document.getElementById('status-text');
+  el.textContent = txt;
+  el.className = t==='ok'?'status-ok':t==='loading'?'status-loading':'status-error';
+}
+function classify(n) {
+  n = n.toLowerCase();
+  if (n.includes('gif')) return 'gif';
+  if (n.includes('video')||n.includes('ugc')||n.includes('shruti')||n.includes('dimple')||n.includes('influencer')||n.includes('mossarrat')||n.includes('akshansha')) return 'video';
+  return 'static';
+}
+function buildSummary(ads) {
+  const out = {};
+  ['video','gif','static'].forEach(fmt => {
+    const g = ads.filter(a=>a.format===fmt);
+    const sp=S(g,'spend'), pu=S(g,'actions_purchase'), rev=S(g,'action_values_purchase'), im=S(g,'impressions'), cl=S(g,'clicks');
+    out[fmt] = { spend:R(sp), purchases:R(pu), revenue:R(rev), roas:sp>0?R(rev/sp,2):0, ctr:im>0?R((cl/im)*100,2):0, cpp:pu>0?R(sp/pu):null, ad_count:g.length };
+  });
+  return out;
+}
+function S(arr,k) { return arr.reduce((a,r)=>a+(parseFloat(r[k])||0),0); }
+function R(n,d=0) { return Math.round(n*10**d)/10**d; }
+function F(n)     { return n==null?'—':Math.round(n).toLocaleString('en-IN'); }
+function T(s,l)   { return s&&s.length>l?s.slice(0,l)+'…':s||'—'; }
+function RB(v,lbl) {
+  if (!v||v==='UNKNOWN') return `<span class="rank-badge rank-unk">${lbl}: ?</span>`;
+  if (v.startsWith('ABOVE')) return `<span class="rank-badge rank-above">${lbl}: ↑</span>`;
+  if (v.startsWith('BELOW')) return `<span class="rank-badge rank-below">${lbl}: ↓</span>`;
+  return `<span class="rank-badge rank-avg">${lbl}: avg</span>`;
+}
+
+function renderAll() {
+  const sp  = allAds.reduce((s,a)=>s+(parseFloat(a.spend)||0),0);
+  const rev = allAds.reduce((s,a)=>s+(parseFloat(a.action_values_purchase)||0),0);
+  const ar  = sp>0?(rev/sp).toFixed(2):'0.00';
+  document.getElementById('ad-count').textContent          = `${allAds.length} Creatives Analysed`;
+  document.getElementById('total-spend-header').textContent = `₹${F(sp)} Total Spend`;
+  document.getElementById('avg-roas-val').textContent       = `${ar}×`;
+  document.getElementById('total-spend-bar').textContent    = `₹${F(sp)}`;
+  document.getElementById('total-revenue-bar').textContent  = `₹${F(rev)}`;
+  renderFormatGrid(); renderTables(); renderLadder();
+}
+
+function renderFormatGrid() {
+  const BE = breakevenRoas();
+  const cfgs = [
+    {key:'video', label:'Video', num:'01'},
+    {key:'gif',   label:'GIF / Motion', num:'02'},
+    {key:'static',label:'Static Image', num:'03'},
+  ];
+  document.getElementById('format-grid').innerHTML = cfgs.map(c => {
+    const s = summary[c.key]||{};
+    const rc = s.roas>=BE?'good':s.roas>=(BE*0.6)?'ok':'bad';
+    const cc = s.cpp&&s.cpp<2500?'ok':'bad';
+    return `<div class="format-card ${c.key}">
+      <div class="fc-stripe"></div><div class="fc-type">Format ${c.num}</div><div class="fc-name">${c.label}</div>
+      <div class="fc-metrics">
+        <div class="fc-metric"><span class="val">₹${F(s.spend||0)}</span><span class="lbl">Total Spend</span></div>
+        <div class="fc-metric"><span class="val ${rc}">${s.roas!=null?s.roas+'×':'—'}</span><span class="lbl">ROAS</span></div>
+        <div class="fc-metric"><span class="val">${s.purchases||0}</span><span class="lbl">Purchases</span></div>
+        <div class="fc-metric"><span class="val ${cc}">${s.cpp?'₹'+F(s.cpp):'—'}</span><span class="lbl">Avg CPP</span></div>
+        <div class="fc-metric"><span class="val">${s.ctr?s.ctr+'%':'—'}</span><span class="lbl">Avg CTR</span></div>
+        <div class="fc-metric"><span class="val">${s.ad_count||0}</span><span class="lbl">Ad Variants</span></div>
+      </div>
+      <div class="fc-verdict" id="verdict-${c.key}" style="background:rgba(201,168,110,0.06);color:#8A6B30;border:1px solid rgba(201,168,110,0.15);border-radius:8px;padding:11px 13px;font-size:12px;line-height:1.6;">Analysing with Claude...</div>
+    </div>`;
+  }).join('');
+}
+
+function buildTable(ads) {
+  if (!ads.length) return '<p style="padding:20px;color:var(--muted);font-size:13px">No creatives found.</p>';
+  const BE = breakevenRoas();
+  const rows = ads.map(ad => {
+    const sp  = parseFloat(ad.spend)||0;
+    const roas= parseFloat(ad.website_purchase_roas_offsite_conversion_fb_pixel_purchase)||0;
+    const pu  = parseFloat(ad.actions_purchase)||0;
+    const cpp = pu>0?Math.round(sp/pu):null;
+    const atc = parseFloat(ad.actions_add_to_cart)||0;
+    const ic  = parseFloat(ad.actions_initiate_checkout)||0;
+    const vc  = parseFloat(ad.actions_view_content)||0;
+    const ctr = ((parseFloat(ad.ctr)||0)*100).toFixed(2);
+    const rc  = roas>=BE?'green':roas>=(BE*0.4)?'gold':'red';
+    const rpct= Math.min((roas/BE)*100,100).toFixed(0);
+    const rcol= roas>=BE?'var(--green)':roas>=(BE*0.4)?'var(--gold)':'var(--red)';
+    const p25=parseFloat(ad.video_p25_watched_actions_video_view)||0, p50=parseFloat(ad.video_p50_watched_actions_video_view)||0;
+    const p75=parseFloat(ad.video_p75_watched_actions_video_view)||0, p100=parseFloat(ad.video_p100_watched_actions_video_view)||0;
+    const wt=parseFloat(ad.video_avg_time_watched_actions_video_view)||0;
+    const ret = p25>0
+      ? `<div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">${F(p25)}→${F(p50)}→${F(p75)}→${F(p100)}</div>
+         <div style="font-size:10px;color:${wt>=5?'var(--green)':wt>=3?'var(--gold)':'var(--red)'};margin-top:2px">${wt.toFixed(1)}s avg ${wt>=5?'🔥':wt>=3?'✓':'⚠️'}</div>`
+      : `<span style="font-size:10px;color:var(--muted)">—</span>`;
+    const tag = (ad.campaign||'').toLowerCase().includes('checkout')
+      ? `<span style="font-size:10px;background:#EEF3F7;color:#2E4F65;padding:1px 6px;border-radius:3px;font-family:'DM Mono',monospace;display:inline-block;margin-top:3px">Creative Test</span>` : '';
+    return `<tr>
+      <td><span class="ad-name">${ad.ad_name||'—'}</span><span class="ad-context">${T(ad.adset_name||'',40)}</span>${tag}</td>
+      <td>
+        <div style="margin-bottom:5px"><span class="mono-val">₹${F(sp)}</span></div>
+        <div class="roas-bar-wrap"><span class="mono-val ${rc}">${roas.toFixed(2)}×</span>
+          <div class="roas-bar-bg"><div class="roas-bar" style="width:${rpct}%;background:${rcol}"></div></div></div>
+        <div style="margin-top:5px;font-size:11px;color:var(--muted)">${pu?`${pu} sales · CPP ₹${F(cpp)}`:'0 sales'}</div>
+      </td>
+      <td>
+        <div class="funnel-row">
+          <div class="funnel-step"><span class="funnel-num">${F(vc)}</span><span class="funnel-label">View</span></div>
+          <div class="funnel-arrow">›</div>
+          <div class="funnel-step"><span class="funnel-num">${F(atc)}</span><span class="funnel-label">ATC</span></div>
+          <div class="funnel-arrow">›</div>
+          <div class="funnel-step"><span class="funnel-num">${F(ic)}</span><span class="funnel-label">IC</span></div>
+          <div class="funnel-arrow">›</div>
+          <div class="funnel-step"><span class="funnel-num ${pu>0?'mono-val green':'mono-val red'}">${pu}</span><span class="funnel-label">Buy</span></div>
+        </div>
+        <div style="margin-top:5px;font-size:11px;color:var(--muted)">CTR ${ctr}%</div>
+      </td>
+      <td>${ret}</td>
+      <td>${RB(ad.quality_ranking,'Quality')}${RB(ad.engagement_rate_ranking,'Engage')}${RB(ad.conversion_rate_ranking,'Conv.')}</td>
+    </tr>`;
+  }).join('');
+  return `<table class="creative-table">
+    <thead><tr><th>Creative</th><th>Spend / ROAS</th><th>Funnel</th><th>Retention / Watch</th><th>FB Rankings</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+}
+
+function byRoas(a) { return [...a].sort((x,y)=>(parseFloat(y.website_purchase_roas_offsite_conversion_fb_pixel_purchase)||0)-(parseFloat(x.website_purchase_roas_offsite_conversion_fb_pixel_purchase)||0)); }
+function renderTables() {
+  document.getElementById('video-table-wrap').innerHTML  = buildTable(byRoas(allAds.filter(a=>a.format==='video')));
+  document.getElementById('gif-table-wrap').innerHTML    = buildTable(byRoas(allAds.filter(a=>a.format==='gif')));
+  document.getElementById('static-table-wrap').innerHTML = buildTable(byRoas(allAds.filter(a=>a.format==='static')));
+}
+
+function renderLadder() {
+  const BE = breakevenRoas();
+  const sorted = [...allAds].sort((a,b)=>(parseFloat(b.website_purchase_roas_offsite_conversion_fb_pixel_purchase)||0)-(parseFloat(a.website_purchase_roas_offsite_conversion_fb_pixel_purchase)||0)).slice(0,12);
+  const rows = sorted.map(ad => {
+    const roas=parseFloat(ad.website_purchase_roas_offsite_conversion_fb_pixel_purchase)||0;
+    const sp=parseFloat(ad.spend)||0, pu=parseFloat(ad.actions_purchase)||0;
+    const cpp=pu>0?Math.round(sp/pu):null;
+    const gap=Math.max(0,BE-roas);
+    const pct=Math.min((roas/BE)*100,100).toFixed(0);
+    const col=roas>=BE?'var(--green)':roas>=BE*0.7?'var(--gold)':roas>=BE*0.4?'var(--rose)':'var(--red)';
+    const rc=roas>=BE?'green':roas>=(BE*0.4)?'gold':'red';
+    const act=roas>=BE?'✅ Profitable — scale':roas>=(BE*0.6)?'🚀 Scale + optimise':roas>=(BE*0.3)?'🧪 Test variants':roas>0?'⚠️ Hold / recut':'—';
+    return `<div class="pl-row" data-creative="${ad.ad_name}">
+      <div class="pl-cell creative-cell" style="color:${col}">${ad.ad_name}</div>
+      <div class="pl-cell"><div class="pl-gap-bar"><div class="pl-gap-fill" style="width:${pct}%;background:${col}"></div></div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:3px">${gap.toFixed(2)}× to breakeven</div></div>
+      <div class="pl-cell mono-val ${rc}">${roas.toFixed(2)}×</div>
+      <div class="pl-cell mono-val">${cpp?'₹'+F(cpp):'—'}</div>
+      <div class="pl-cell" id="ladder-action-${ad.ad_name.replace(/\s+/g,'-').replace(/[^a-zA-Z0-9-_]/g,'')}" style="font-size:12px;color:${col}">${act}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('profit-ladder-wrap').innerHTML = `
+  <div class="profit-ladder">
+    <div class="pl-header"><h3>Distance to Breakeven (Target: ${BE}× ROAS)</h3><span>${BIZ.margin}% GROSS MARGIN · LIVE DATA</span></div>
+    <div class="pl-scroll"><div class="pl-inner">
+      <div class="pl-row header-row">
+        <div class="pl-cell header">Creative</div><div class="pl-cell header">Gap to Breakeven</div>
+        <div class="pl-cell header">ROAS</div><div class="pl-cell header">CPP ₹</div><div class="pl-cell header">Action</div>
+      </div>${rows}
+    </div></div>
+  </div>`;
+}
+
+function showError(msg) {
+  const html = `<div class="error-box"><h3>Could not load live data</h3><p style="margin-bottom:8px;font-size:13px">${msg}</p><button onclick="loadData()" style="margin-top:14px;padding:8px 20px;background:var(--ink);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:'DM Mono',monospace;font-size:12px;letter-spacing:1px">↻ RETRY</button></div>`;
+  ['format-grid','video-table-wrap','gif-table-wrap','static-table-wrap','profit-ladder-wrap'].forEach(id=>{document.getElementById(id).innerHTML=html;});
+}
+
+// ─── CLAUDE AI — FULL PAGE ANALYSIS ──────────────────────────────────────────
+async function fetchClaudeInsights(ads, summary) {
+  const badge   = document.getElementById('claude-badge');
+  const content = document.getElementById('claude-content');
+  badge.textContent = '● CLAUDE ANALYSING…';
+  badge.className   = 'claude-badge thinking';
+  setStatus('loading','● CLAUDE DOING DEEP ANALYSIS…');
+
+  // ── Lean payload — only what Claude needs ────────────────────────────
+  const BE = breakevenRoas();
+  const sortByRoas = [...ads].sort((a,b)=>(parseFloat(b.website_purchase_roas_offsite_conversion_fb_pixel_purchase)||0)-(parseFloat(a.website_purchase_roas_offsite_conversion_fb_pixel_purchase)||0));
+  const mapAd = a => ({
+    n:a.ad_name, f:a.format,
+    sp:Math.round(parseFloat(a.spend)||0),
+    roas:+(parseFloat(a.website_purchase_roas_offsite_conversion_fb_pixel_purchase)||0).toFixed(2),
+    pu:Math.round(parseFloat(a.actions_purchase)||0),
+    ctr:+((parseFloat(a.ctr)||0)*100).toFixed(2),
+    ws:+(parseFloat(a.video_avg_time_watched_actions_video_view)||0).toFixed(1),
+    p25:Math.round(parseFloat(a.video_p25_watched_actions_video_view)||0),
+    p100:Math.round(parseFloat(a.video_p100_watched_actions_video_view)||0),
+    atc:Math.round(parseFloat(a.actions_add_to_cart)||0),
+    q:a.quality_ranking||'?', e:a.engagement_rate_ranking||'?', c:a.conversion_rate_ranking||'?',
+  });
+  const top    = sortByRoas.slice(0,6).map(mapAd);
+  const bottom = sortByRoas.filter(a=>(parseFloat(a.spend)||0)>500).slice(-3).map(mapAd);
+
+  const payload = {
+    brand:BIZ.brand, industry:BIZ.industry, be:BE, target:BIZ.targetRoas,
+    margin:BIZ.margin, aov:BIZ.aov, audience:BIZ.audience, products:BIZ.product,
+    fmtSummary:summary, top, bottom,
+    allNames:ads.map(a=>({n:a.ad_name,roas:+(parseFloat(a.website_purchase_roas_offsite_conversion_fb_pixel_purchase)||0).toFixed(2),sp:Math.round(parseFloat(a.spend)||0),f:a.format})),
+  };
+
+  const systemPrompt = `D2C Meta Ads strategist. Analyse ${BIZ.brand} (${BIZ.industry}). BE ROAS=${BE}x, target=${BIZ.targetRoas}x, margin=${BIZ.margin}%, AOV=₹${BIZ.aov}, audience="${BIZ.audience}", products="${BIZ.product}". Reference creative names and ₹ numbers. Return ONLY valid JSON, no markdown:
+{"summary":"2-3 sentence verdict","topAction":"#1 action with creative name","alerts":[{"type":"warn|good|info","text":"..."},{"type":"warn|good|info","text":"..."},{"type":"warn|good|info","text":"..."}],"formatInsights":{"video":"2 sentences","gif":"2 sentences","static":"2 sentences"},"insightStrips":{"video":"1 sentence","gif":"1 sentence","static":"1 sentence"},"actionPlan":[{"priority":"p1|p2|p3|grow","emoji":"🚨","title":"label","headline":"creative","detail":"2 sentences"},{"priority":"grow","emoji":"🚀","title":"label","headline":"creative","detail":"2 sentences"},{"priority":"p2","emoji":"🎬","title":"label","headline":"creative","detail":"2 sentences"},{"priority":"p1","emoji":"🚨","title":"label","headline":"creative","detail":"2 sentences"},{"priority":"p2","emoji":"✍️","title":"label","headline":"creative","detail":"2 sentences"},{"priority":"p3","emoji":"🔁","title":"label","headline":"creative","detail":"2 sentences"}],"nextSteps":{"newHooks":["hook1","hook2","hook3","hook4"],"newCreativeIdeas":["idea1","idea2","idea3"],"pauseNow":["creative — reason","creative — reason"],"audienceSuggestions":["audience1","audience2","audience3"]},"learnings":[{"label":"Hook Intelligence","text":"..."},{"label":"Format Pattern","text":"..."},{"label":"Creative Angle","text":"..."},{"label":"Audience Signal","text":"..."},{"label":"Budget Efficiency","text":"..."},{"label":"Strategic Takeaway","text":"..."}],"budgetMove":"specific ₹ reallocation"}`;
+
+  try {
+    const res = await fetch('/.netlify/functions/claude', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:1500,
+        system:systemPrompt,
+        messages:[{role:'user',content:`Analyse this ${BIZ.brand} Meta Ads data (${ads.length} creatives) and return deep JSON insights:\n\n${JSON.stringify(payload)}`}],
+      }),
+    });
+    if (!res.ok) throw new Error(`Claude API ${res.status}`);
+    const data = await res.json();
+    const raw  = data.content?.find(b=>b.type==='text')?.text||'{}';
+    const ins  = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    const now  = new Date();
+
+    // ── 1. Claude panel ─────────────────────────────────────────────────
+    const alertsHtml = (ins.alerts||[]).map(a=>
+      `<div class="claude-alert ${a.type==='warn'?'warn':a.type==='good'?'good':'info'}">
+        <span>${a.type==='warn'?'⚠️':a.type==='good'?'✅':'ℹ️'}</span><span>${a.text}</span></div>`).join('');
+    const fi = ins.formatInsights||{};
+    content.innerHTML = `
+      <div class="claude-block span3" style="margin-bottom:14px;background:rgba(201,168,110,0.05);border-color:rgba(201,168,110,0.12)">
+        <div class="claude-block-label">Overall Assessment</div>
+        <p style="color:rgba(255,255,255,0.85);font-size:13px">${ins.summary||'—'}</p>
+      </div>
+      <div class="claude-grid" style="margin-bottom:14px">
+        <div style="grid-column:span 2">
+          <div class="claude-top-action">
+            <div class="action-icon">🎯</div>
+            <div><div class="action-label">Highest-Leverage Action Right Now</div><div class="action-text">${ins.topAction||'—'}</div></div>
+          </div>
+        </div>
+        <div class="claude-alerts">${alertsHtml}</div>
+      </div>
+      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:8px">Format Intelligence</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+        <div class="cfi-item"><div class="cfi-format video">● Video</div><div class="cfi-text">${fi.video||'—'}</div></div>
+        <div class="cfi-item"><div class="cfi-format gif">● GIF / Motion</div><div class="cfi-text">${fi.gif||'—'}</div></div>
+        <div class="cfi-item"><div class="cfi-format static">● Static</div><div class="cfi-text">${fi.static||'—'}</div></div>
+      </div>
+      <div class="claude-grid">
+        <div class="claude-block"><div class="claude-block-label">Budget Reallocation</div><p>${ins.budgetMove||'—'}</p></div>
+        <div class="claude-block span2"><div class="claude-block-label">Winning Creative Angle — Double Down</div><p style="color:rgba(255,255,255,0.8)">${(ins.learnings||[]).find(l=>l.label==='Creative Angle')?.text||'—'}</p></div>
+      </div>
+      <div class="claude-timestamp">✦ Claude analysed ${ads.length} creatives across ${BIZ.industry} · Generated ${now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})} · Auto-refreshes with data</div>`;
+    badge.textContent = '● ANALYSIS READY';
+    badge.className   = 'claude-badge ready';
+    document.getElementById('claude-tag').textContent = `✦ Claude · ${now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}`;
+
+    // ── 2. Insight strips ────────────────────────────────────────────────
+    const strips = ins.insightStrips||{};
+    if (strips.video)  document.getElementById('video-insight-strip').innerHTML  = `<strong>✦ Live Signal:</strong> ${strips.video}`;
+    if (strips.gif)    document.getElementById('gif-insight-strip').innerHTML    = `<strong>✦ Live Signal:</strong> ${strips.gif}`;
+    if (strips.static) document.getElementById('static-insight-strip').innerHTML = `<strong>✦ Live Signal:</strong> ${strips.static}`;
+
+    // ── 3. Format card verdicts ──────────────────────────────────────────
+    ['video','gif','static'].forEach(fmt => {
+      const el = document.getElementById(`verdict-${fmt}`);
+      if (el && fi[fmt]) { el.innerHTML = `<span style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--gold)">✦ CLAUDE · </span>${fi[fmt]}`; }
+    });
+
+    // ── 4. Action plan ───────────────────────────────────────────────────
+    const pm = {p1:{cls:'p1'},p2:{cls:'p2'},p3:{cls:'p3'},grow:{cls:'grow'}};
+    if (ins.actionPlan?.length) {
+      document.getElementById('action-grid').innerHTML = ins.actionPlan.map(ac => {
+        const c = pm[ac.priority]||{cls:'p3'};
+        return `<div class="action-card"><span class="priority ${c.cls}">${ac.emoji||''} ${ac.title||''}</span><h4>${ac.headline||''}</h4><p>${ac.detail||''}</p></div>`;
+      }).join('');
+      document.getElementById('action-plan-tag').textContent = `✦ Claude · Live · ${now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}`;
+    }
+
+    // ── 5. Next Steps ────────────────────────────────────────────────────
+    const ns = ins.nextSteps||{};
+    const makeList = (items, tag) => (items||[]).map((t,i)=>`<div class="ns-item"><div class="ns-item-num">${String(i+1).padStart(2,'0')}</div><div class="ns-item-text">${t}</div></div>`).join('');
+    document.getElementById('next-steps-grid').innerHTML = `
+      <div class="ns-card">
+        <div class="ns-card-header"><div class="ns-card-icon">🎣</div><div class="ns-card-title">New Hook Ideas</div><span class="ns-card-tag hook">Video / GIF</span></div>
+        ${makeList(ns.newHooks,'hook')}
+      </div>
+      <div class="ns-card">
+        <div class="ns-card-header"><div class="ns-card-icon">🎨</div><div class="ns-card-title">New Creative Concepts</div><span class="ns-card-tag creative">To Test</span></div>
+        ${makeList(ns.newCreativeIdeas,'creative')}
+      </div>
+      <div class="ns-card">
+        <div class="ns-card-header"><div class="ns-card-icon">🚨</div><div class="ns-card-title">Pause These Now</div><span class="ns-card-tag pause">Budget Drain</span></div>
+        ${makeList(ns.pauseNow,'pause')}
+      </div>
+      <div class="ns-card">
+        <div class="ns-card-header"><div class="ns-card-icon">🎯</div><div class="ns-card-title">Audience Suggestions</div><span class="ns-card-tag audience">Targeting</span></div>
+        ${makeList(ns.audienceSuggestions,'audience')}
+      </div>`;
+    document.getElementById('next-steps-tag').textContent = `✦ Claude · Live · ${now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}`;
+
+    // ── 6. Learnings ─────────────────────────────────────────────────────
+    const learnings = ins.learnings||[];
+    if (learnings.length) {
+      document.getElementById('learning-box').innerHTML = `
+        <div class="learning-eyebrow">✦ WHAT THE DATA IS TEACHING YOU · ${BIZ.brand.toUpperCase()} · ${BIZ.industry.toUpperCase()}</div>
+        <div class="learning-grid">
+          ${learnings.map(l=>`
+            <div class="learning-item">
+              <div class="learning-item-label">${l.label||''}</div>
+              <div class="learning-item-text">${l.text||''}</div>
+            </div>`).join('')}
+        </div>`;
+      document.getElementById('learnings-tag').textContent = `✦ Claude · This 14-day period`;
+    }
+
+    // ── 7. Ladder actions ────────────────────────────────────────────────
+    const la = ins.ladderActions||{};
+    Object.keys(la).forEach(k => {
+      const safeId = k.replace(/\s+/g,'-').replace(/[^a-zA-Z0-9-_]/g,'');
+      const el = document.getElementById(`ladder-action-${safeId}`);
+      if (el) el.innerHTML = `<span style="font-size:11px;color:var(--gold);line-height:1.5">✦ ${la[k]}</span>`;
+    });
+
+    setStatus('ok',`● LIVE · ${ads.length} CREATIVES · CLAUDE ANALYSIS COMPLETE`);
+
+  } catch(e) {
+    badge.textContent = '● CLAUDE ERROR';
+    badge.className   = 'claude-badge error';
+    content.innerHTML = `<div class="claude-alert warn" style="margin-top:4px"><span>⚠️</span><span>Could not fetch Claude insights: ${e.message}. Dashboard data is unaffected — Claude retries on next refresh.</span></div>`;
+    setStatus('ok',`● LIVE · ${ads.length} CREATIVES · Data loaded`);
+    console.warn('Claude error:',e);
+  }
+}
+
+// ─── BOOT ─────────────────────────────────────────────────────────────────────
+if (checkSession()) {
+  const saved = localStorage.getItem(SETUP_KEY);
+  if (saved) { try { BIZ = JSON.parse(saved); } catch(e) {} }
+  document.getElementById('auth-gate').style.display = 'none';
+  applyBizContext();
+  loadData();
+  setInterval(loadData, REFRESH_MS);
+} else {
+  setTimeout(() => { const u = document.getElementById('auth-user'); if (u) u.focus(); }, 100);
+}
+</script>
+</body>
+</html>
