@@ -818,7 +818,7 @@ async function fetchClaudeInsights(ads, summary) {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        model:'claude-sonnet-4-20250514', max_tokens:1500,
+        model:'claude-3-5-sonnet-latest', max_tokens:1500,
         system:systemPrompt,
         messages:[{role:'user',content:`Analyse this ${BIZ.brand} Meta Ads data (${ads.length} creatives) and return deep JSON insights:\n\n${JSON.stringify(payload)}`}],
       }),
@@ -936,6 +936,10 @@ async function fetchClaudeInsights(ads, summary) {
     badge.textContent = '● CLAUDE ERROR';
     badge.className   = 'claude-badge error';
     content.innerHTML = `<div class="claude-alert warn" style="margin-top:4px"><span>⚠️</span><span>Could not fetch Claude insights: ${e.message}. Dashboard data is unaffected — Claude retries on next refresh.</span></div>`;
+    ['video','gif','static'].forEach(fmt => {
+      const el = document.getElementById(`verdict-${fmt}`);
+      if (el) el.innerHTML = `<span style="font-size:12px;color:rgba(201,110,110,0.8)">⚠️ Analysis Failed</span>`;
+    });
     setStatus('ok',`● LIVE · ${ads.length} CREATIVES · Data loaded`);
     console.warn('Claude error:',e);
   }
